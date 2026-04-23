@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Keepsakes — a little deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Caveat:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@0,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f7f1e6;
+    --cream-deep: #efe6d4;
+    --dusty-rose: #d9a9a0;
+    --warm-tan: #c9a47a;
+    --sage: #a8b89a;
+    --ink: #4a3f36;
+    --ink-soft: #7a6a5c;
+    --paper: #fbf6ec;
+    --shadow-warm: rgba(74, 63, 54, 0.12);
+    --shadow-deep: rgba(74, 63, 54, 0.22);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse at 20% 10%, #f9ede0 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 90%, #f0dccb 0%, transparent 50%),
+      linear-gradient(135deg, #f5ecdc 0%, #efe1cc 100%);
+    background-attachment: fixed;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Grain overlay on whole page */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.25  0 0 0 0 0.2  0 0 0 0.15 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    z-index: 1;
+  }
+
+  .stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 2;
+  }
+
+  .deck-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    width: min(520px, 92vw);
+    max-height: 100%;
+  }
+
+  .intro-note {
+    width: 100%;
+    text-align: center;
+    padding: 0 6px;
+  }
+  .intro-note .eyebrow {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    opacity: 0.75;
+    margin-bottom: 10px;
+  }
+  .intro-note p {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink);
+    opacity: 0.85;
+    max-width: 460px;
+    margin: 0 auto;
+    font-weight: 400;
+    letter-spacing: -0.002em;
+  }
+  .intro-note em {
+    font-style: italic;
+    color: var(--ink);
+    opacity: 1;
+  }
+  @media (max-width: 520px) {
+    .intro-note p { font-size: 13px; }
+    .intro-note .eyebrow { font-size: 9px; }
+  }
+
+  .deck {
+    position: relative;
+    width: 100%;
+    height: min(680px, 72dvh);
+    flex-shrink: 0;
+  }
+
+  .card {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 0%, #fffaf0 0%, transparent 60%),
+      linear-gradient(160deg, #fdf7ea 0%, #f6ead5 100%);
+    border-radius: 18px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.7) inset,
+      0 30px 60px -20px var(--shadow-deep),
+      0 10px 25px -10px var(--shadow-warm);
+    padding: 44px 40px 28px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateX(40px) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow: hidden;
+  }
+
+  /* Paper texture on each card */
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.28;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.35  0 0 0 0 0.25  0 0 0 0.18 0'/></filter><rect width='100%25' height='100%25' filter='url(%23p)'/></svg>");
+    border-radius: 18px;
+  }
+
+  /* Warm edge vignette */
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: 18px;
+    box-shadow: inset 0 0 80px rgba(180, 140, 100, 0.18);
+  }
+
+  .card.active {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .card.leaving-left {
+    opacity: 0;
+    transform: translateX(-40px) scale(0.98);
+  }
+
+  .card.leaving-right {
+    opacity: 0;
+    transform: translateX(40px) scale(0.98);
+  }
+
+  @media (hover: hover) {
+    .card.active:hover {
+      transform: translateY(-3px) scale(1.005);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.7) inset,
+        0 40px 70px -20px var(--shadow-deep),
+        0 14px 30px -10px var(--shadow-warm);
+    }
+  }
+
+  .card-index {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    opacity: 0.75;
+  }
+
+  .card-title {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 5.2vw, 38px);
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 18px;
+    letter-spacing: -0.02em;
+  }
+  .card-title .soft {
+    font-weight: 400;
+    color: var(--ink-soft);
+  }
+  /* Question cards: no header — just the question + little imagination line */
+  .card:not(.card-intro) .card-title { display: none; }
+  .card:not(.card-intro) .card-question {
+    font-size: clamp(24px, 4.6vw, 32px);
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -0.015em;
+    margin-top: 8px;
+    margin-bottom: 22px;
+  }
+
+  /* Intro card — the "from me" note */
+  .card-intro .card-title {
+    font-size: clamp(40px, 8vw, 58px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    margin-bottom: 10px;
+  }
+  .card-intro .card-question {
+    font-size: clamp(15px, 2.6vw, 17px);
+    font-weight: 400;
+    line-height: 1.65;
+    color: var(--ink);
+    opacity: 0.9;
+    margin-bottom: 10px;
+  }
+  .card-intro .card-question em {
+    font-style: italic;
+    color: var(--ink);
+    opacity: 1;
+  }
+  .card-intro .signoff {
+    font-family: 'Caveat', cursive;
+    font-size: 22px;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    margin-bottom: auto;
+  }
+  .card-intro .begin {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    align-self: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: none;
+    border: 1px solid rgba(74, 63, 54, 0.25);
+    border-radius: 999px;
+    padding: 12px 22px;
+    cursor: pointer;
+    margin-top: 28px;
+    transition: all 0.25s ease;
+  }
+  .card-intro .begin:hover {
+    background: rgba(74, 63, 54, 0.05);
+    border-color: var(--ink);
+    transform: translateX(2px);
+  }
+  .card-intro .begin .arrow {
+    transition: transform 0.25s ease;
+  }
+  .card-intro .begin:hover .arrow {
+    transform: translateX(3px);
+  }
+
+  .card-question {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    font-size: clamp(17px, 2.8vw, 20px);
+    line-height: 1.55;
+    color: var(--ink);
+    margin-bottom: 16px;
+    letter-spacing: -0.005em;
+  }
+
+  .card-subtext {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(19px, 3vw, 22px);
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+
+  /* Photo area — centered in the remaining space below text */
+  .photo-zone {
+    margin: auto 0;
+    padding: 24px 0;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    position: relative;
+    z-index: 3;
+  }
+
+  .photo-drop {
+    border: 1.5px dashed rgba(122, 106, 92, 0.45);
+    border-radius: 12px;
+    padding: 18px 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-family: 'Caveat', cursive;
+    font-size: 19px;
+    transition: all 0.3s ease;
+    background: rgba(255, 250, 238, 0.4);
+  }
+
+  .photo-drop:hover {
+    border-color: var(--dusty-rose);
+    color: var(--ink);
+    background: rgba(255, 250, 238, 0.7);
+    transform: translateY(-1px);
+  }
+
+  .photo-drop svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+  }
+
+  .photo-drop input {
+    display: none;
+  }
+
+  /* "peek at mine" — pill button that looks like an actual button */
+  .peek-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: rgba(255, 250, 238, 0.7);
+    border: 1px solid rgba(74, 63, 54, 0.22);
+    border-radius: 999px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  }
+  .peek-btn:hover {
+    background: rgba(255, 250, 238, 0.95);
+    border-color: var(--ink);
+    transform: translateY(-1px);
+  }
+
+  .peek-gallery {
+    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px;
+    padding: 6px 0;
+    max-width: 100%;
+  }
+  .peek-gallery.open { display: flex; }
+
+  .peek-polaroid {
+    background: #fdfbf4;
+    padding: 10px 10px 26px;
+    box-shadow:
+      0 2px 4px rgba(74, 63, 54, 0.14),
+      0 12px 24px -8px rgba(74, 63, 54, 0.26);
+    border-radius: 2px;
+    width: 150px;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateY(10px) rotate(var(--tilt, -2deg));
+    animation: peekIn 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+  }
+  .peek-polaroid:nth-child(2) { --tilt: 2deg; animation-delay: 0.08s; }
+  .peek-polaroid:nth-child(3) { --tilt: -3deg; animation-delay: 0.16s; }
+  .peek-polaroid img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: #eae1d0;
+    border-radius: 1px;
+  }
+  @keyframes peekIn {
+    to { opacity: 1; transform: translateY(0) rotate(var(--tilt, -2deg)); }
+  }
+
+  /* Polaroid */
+  .polaroid {
+    background: #fdfbf4;
+    padding: 16px 16px 52px;
+    box-shadow:
+      0 2px 4px rgba(74, 63, 54, 0.15),
+      0 18px 36px -10px rgba(74, 63, 54, 0.32);
+    border-radius: 2px;
+    transform: rotate(-3.5deg) translateY(30px) scale(0.9);
+    opacity: 0;
+    transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.3), opacity 0.5s ease;
+    width: min(340px, 78vw);
+    position: relative;
+    cursor: grab;
+  }
+
+  .polaroid.shown {
+    opacity: 1;
+    transform: rotate(-3.5deg) translateY(0) scale(1);
+  }
+
+  .polaroid:nth-child(even) {
+    transform: rotate(2.5deg) translateY(30px) scale(0.9);
+  }
+  .polaroid:nth-child(even).shown {
+    transform: rotate(2.5deg) translateY(0) scale(1);
+  }
+
+  .polaroid img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: #eae1d0;
+    border-radius: 1px;
+  }
+
+  .polaroid .remove {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--dusty-rose);
+    color: white;
+    border: none;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    box-shadow: 0 2px 6px rgba(74, 63, 54, 0.25);
+    font-family: serif;
+  }
+  .polaroid:hover .remove {
+    opacity: 1;
+  }
+
+  /* Navigation — minimal chevrons */
+  .nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--ink-soft);
+    padding: 0;
+    transition: color 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+  }
+  .nav:hover {
+    color: var(--ink);
+    transform: translateY(-50%) translateX(var(--hover-x, 0));
+  }
+  .nav.prev:hover { --hover-x: -3px; }
+  .nav.next:hover { --hover-x: 3px; }
+  .nav:disabled {
+    opacity: 0.2;
+    cursor: default;
+    transform: translateY(-50%);
+  }
+  .nav.prev { left: max(24px, calc(50vw - 340px)); }
+  .nav.next { right: max(24px, calc(50vw - 340px)); }
+  .nav svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.25; }
+
+  @media (max-width: 640px) {
+    .nav { display: none; }
+  }
+
+  /* Progress */
+  .progress {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    z-index: 10;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.75;
+  }
+
+  /* Intro corner mark */
+  .corner {
+    position: fixed;
+    top: 22px;
+    left: 24px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    z-index: 10;
+  }
+
+  /* Accent dot by index */
+  .accent-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  /* Card color accents — each card gets a subtle different warmth */
+  .card[data-accent="rose"] .accent-dot { background: var(--dusty-rose); }
+  .card[data-accent="tan"] .accent-dot { background: var(--warm-tan); }
+  .card[data-accent="sage"] .accent-dot { background: var(--sage); }
+
+  .card[data-accent="rose"] { background: radial-gradient(ellipse at 30% 0%, #fff3ed 0%, transparent 60%), linear-gradient(160deg, #fdf4ee 0%, #f5e1d6 100%); }
+  .card[data-accent="sage"] { background: radial-gradient(ellipse at 30% 0%, #f6faef 0%, transparent 60%), linear-gradient(160deg, #f5f3e6 0%, #e8eadb 100%); }
+  .card[data-accent="tan"]  { background: radial-gradient(ellipse at 30% 0%, #fff7e6 0%, transparent 60%), linear-gradient(160deg, #fdf1db 0%, #f0dcb9 100%); }
+
+  @media (max-width: 520px) {
+    .card { padding: 44px 26px 24px; }
+    .corner { font-size: 18px; top: 16px; left: 18px; }
+    .polaroid { width: min(260px, 72vw); padding: 14px 14px 44px; }
+  }
+
+  /* Hint for swipe */
+  .swipe-hint {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Caveat', cursive;
+    font-size: 16px;
+    color: var(--ink-soft);
+    opacity: 0.6;
+    z-index: 10;
+    pointer-events: none;
+    animation: fadeHint 4s ease-in-out forwards;
+  }
+  @keyframes fadeHint {
+    0%, 70% { opacity: 0.6; }
+    100% { opacity: 0; }
+  }
+  @media (min-width: 641px) {
+    .swipe-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="corner">Keepsakes</div>
+
+<div class="stage">
+  <button class="nav prev" aria-label="Previous card">
+    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="14 6 9 12 14 18"></polyline></svg>
+  </button>
+
+  <div class="deck-wrap">
+
+  <div class="deck" id="deck">
+
+    <!-- ========== INTRO CARD (from me) ========== -->
+    <article class="card card-intro" data-accent="tan" data-index="0">
+      <div class="card-index"><span class="accent-dot"></span>A note from me</div>
+      <h2 class="card-title">Keepsakes</h2>
+      <p class="card-question">My ten favorite connection card questions, inspired by decks like <em>Tales</em> and <em>We're Not Really Strangers</em>.</p>
+      <p class="card-question">I added photos because a story always lands deeper when you can see it.</p>
+      <p class="signoff">— with love, Josephine</p>
+      <button class="begin" type="button">begin <span class="arrow">→</span></button>
+    </article>
+
+    <!-- ========== CARD 1 — The First Thing ========== -->
+    <article class="card" data-accent="rose" data-index="2">
+      <div class="card-index"><span class="accent-dot"></span>01 / 10</div>
+      <h2 class="card-title">The First Thing</h2>
+      <p class="card-question">What's the earliest memory you can actually picture?</p>
+      <p class="card-subtext">not what you've been told — what you remember</p>
+      <div class="photo-zone"></div>
+    </article>
+
+    <!-- ========== CARD 2 ========== -->
+    <article class="card" data-accent="tan" data-index="1">
+      <div class="card-index"><span class="accent-dot"></span>02 / 10</div>
+      <h2 class="card-title">Obsessed</h2>
+      <p class="card-question">What were you weirdly, completely obsessed with as a kid?</p>
+      <p class="card-subtext">the thing that took over your personality for a year</p>
+      <div class="photo-zone"></div>
+    </article>
+
+    <!-- ========== CARD 3 ========== -->
+    <article class="card" data-accent="sage" data-index="3">
+      <div class="card-index"><span class="accent-dot"></span>03 / 10</div>
+      <h2 class="card-title">Tastes Like Home</h2>
+      <p class="card-question">What food takes you straight back to a specific era of your life?</p>
+      <p class="card-subtext">grandma's cooking, lunchbox snacks, 2am diner fries</p>
+      <div class="photo-zone"></div>
+    </article>
+
+    <!-- ========== CARD 4 ========== -->
+    <article class="card" data-accent="rose" data-index="4">
+      <div class="card-index"><span class="accent-dot"></span>04 / 10</div>
+      <h2 class="card-title">Ride or Die</h2>
+      <p class="card-question">Who was your childhood best friend — and where are they now?</p>
+      <p class="card-subtext">the one you swore you'd never lose</p>
+      <div class="photo-zone"></div>
+    </article>
+
+    <!-- ========== CARD 5 ========== -->
+    <article class="card" data-accent="tan" data-index="5">
+      <div class="card-index"><span class="accent-dot"></span>05 / 10</div>
+      <h2 class="card-title">The Birthday</h2>
+      <p class="card-question">What's a birthday that still feels vivid to you?</p>
+      <p class="card-subtext">good, weird, awkward, perfect — all welcome</p>
+      <div class="photo-zone"></div>
+    </article>
+
+    <!-- ========== CARD 6 ========== -->
+    <article class="card" data-accent="sage" data-index="6">
+      <div class="card-index"><span class="accent-dot"></span>06 / 10</div>
+      <h2 class="card-title">Teen Era</h2>
+      <p class="card-question">What was your most embarrassing teenage phase?</p>
+      <p class="card-subtext">emo, scene, VSCO, wannabe-cowboy — we were all something</p>
+      <div class="photo-zone"></div>
+    </article>
+
+    <!-- ========== CARD 7 ========== -->
+    <article class="card" data-accent="rose" data-index="7">
+      <div class="card-index"><span class="accent-dot"></span>07 / 10</div>
+      <h2 class="card-title">Forgiven</h2>
+      <p class="card-question">When's the first time you really felt forgiven?</p>
+      <p class="card-subtext">by a parent, a friend, or yourself — whichever came first</p>
+      <div class="photo-zone"></div>
+    </article>
+
+    <!-- ========== CARD 8 ========== -->
+    <article class="card" data-accent="tan" data-index="8">
+      <div class="card-index"><span class="accent-dot"></span>08 / 10</div>
+      <h2 class="card-title">The Song</h2>
+      <p class="card-question">What song teleports you back somewhere — and where does it drop you?</p>
+      <p class="card-subtext">summer of '18, the car with everyone, 2am on a dance floor</p>
+      <div class="photo-zone"></div>
+    </article>
+
+    <!-- ========== CARD 9 ========== -->
+    <article class="card" data-accent="sage" data-index="9">
+      <div class="card-index"><span class="accent-dot"></span>09 / 10</div>
+      <h2 class="card-title">The Goodbye</h2>
+      <p class="card-question">What's a goodbye you think about more than you'd admit?</p>
+      <p class="card-subtext">a person, a place, or a version of yourself</p>
+      <div class="photo-zone"></div>
+    </article>
+
+    <!-- ========== CARD 10 ========== -->
+    <article class="card" data-accent="rose" data-index="10">
+      <div class="card-index"><span class="accent-dot"></span>10 / 10</div>
+      <h2 class="card-title">Rewind</h2>
+      <p class="card-question">What year of your life would you want to relive?</p>
+      <p class="card-subtext">and would you change anything — or just feel it again?</p>
+      <div class="photo-zone"></div>
+    </article>
+
+  </div>
+  </div><!-- /deck-wrap -->
+
+  <button class="nav next" aria-label="Next card">
+    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="10 6 15 12 10 18"></polyline></svg>
+  </button>
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="swipe-hint">swipe to continue →</div>
+
+<script>
+  const cards = Array.from(document.querySelectorAll('.card'));
+  const prevBtn = document.querySelector('.nav.prev');
+  const nextBtn = document.querySelector('.nav.next');
+  const progress = document.getElementById('progress');
+
+  let current = 0;
+
+  function render(direction) {
+    cards.forEach((card, i) => {
+      card.classList.remove('active', 'leaving-left', 'leaving-right');
+      if (i === current) {
+        card.classList.add('active');
+      } else if (direction === 'next' && i === current - 1) {
+        card.classList.add('leaving-left');
+      } else if (direction === 'prev' && i === current + 1) {
+        card.classList.add('leaving-right');
+      }
+    });
+    if (current === 0) {
+      progress.textContent = '';
+      progress.style.opacity = '0';
+    } else {
+      progress.style.opacity = '';
+      progress.textContent = `${String(current).padStart(2, '0')} — ${String(cards.length - 1).padStart(2, '0')}`;
+    }
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === cards.length - 1;
+  }
+
+  function go(delta) {
+    const next = Math.min(Math.max(current + delta, 0), cards.length - 1);
+    if (next === current) return;
+    const direction = delta > 0 ? 'next' : 'prev';
+    current = next;
+    render(direction);
+  }
+
+  prevBtn.addEventListener('click', () => go(-1));
+  nextBtn.addEventListener('click', () => go(1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') go(1);
+    if (e.key === 'ArrowLeft') go(-1);
+  });
+
+  // Touch / swipe
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchActive = false;
+
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchActive = true;
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (!touchActive) return;
+    touchActive = false;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      go(dx < 0 ? 1 : -1);
+    }
+  });
+
+  // Intro card — clicking "begin →" advances to the first question
+  const beginBtn = document.querySelector('.card-intro .begin');
+  if (beginBtn) {
+    beginBtn.addEventListener('click', () => go(1));
+  }
+
+  // Cards that have creator examples. Add more numbers here as you add photos.
+  const PEEK_CARDS = new Set([1, 2]);
+
+  // Per-card setup: photo upload zone + "peek at mine" gallery
+  // Card index 0 = intro (skipped). Indices 1..10 are questions — card number matches index.
+  cards.forEach((card, i) => {
+    const zone = card.querySelector('.photo-zone');
+    if (!zone) return;
+    setupEmptyState(zone, i);
+  });
+
+  function setupEmptyState(zone, cardNum) {
+    const hasPeek = PEEK_CARDS.has(cardNum);
+    // Order: peek-gallery (top) → peek button (right under photos when open) → add-a-photo (bottom)
+    zone.innerHTML = `
+      <div class="peek-gallery"></div>
+      ${hasPeek ? `<button class="peek-btn" type="button">peek at mine ↗</button>` : ''}
+      <label class="photo-drop">
+        <svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>add a photo</span>
+        <input type="file" accept="image/*" />
+      </label>
+    `;
+
+    // File upload → render polaroid
+    zone.querySelector('input[type=file]').addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => renderPolaroid(zone, reader.result, cardNum);
+      reader.readAsDataURL(file);
+    });
+
+    // Peek toggle (only on cards with examples)
+    if (!hasPeek) return;
+    const peekBtn = zone.querySelector('.peek-btn');
+    const gallery = zone.querySelector('.peek-gallery');
+    peekBtn.addEventListener('click', () => {
+      if (gallery.classList.contains('open')) {
+        gallery.classList.remove('open');
+        gallery.innerHTML = '';
+        peekBtn.textContent = 'peek at mine ↗';
+      } else {
+        gallery.innerHTML = '';
+        ['a', 'b', 'c'].forEach((letter) => {
+          const polaroid = document.createElement('div');
+          polaroid.className = 'peek-polaroid';
+          gallery.appendChild(polaroid);
+          const basePath = `examples/${String(cardNum).padStart(2, '0')}-${letter}`;
+          tryImageExtensions(basePath, ['jpg', 'jpeg', 'png', 'webp', 'JPG', 'PNG'], polaroid);
+        });
+        gallery.classList.add('open');
+        peekBtn.textContent = 'hide ↑';
+      }
+    });
+  }
+
+  // Try a list of extensions until one loads; remove the tile if none do.
+  function tryImageExtensions(basePath, exts, polaroid) {
+    if (exts.length === 0) { polaroid.remove(); return; }
+    const img = new Image();
+    img.onload = () => polaroid.appendChild(img);
+    img.onerror = () => tryImageExtensions(basePath, exts.slice(1), polaroid);
+    img.src = `${basePath}.${exts[0]}`;
+  }
+
+  function renderPolaroid(zone, src, cardNum) {
+    zone.innerHTML = '';
+    const poloid = document.createElement('div');
+    poloid.className = 'polaroid';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove';
+    removeBtn.setAttribute('aria-label', 'Remove photo');
+    removeBtn.textContent = '×';
+
+    const img = document.createElement('img');
+    img.alt = '';
+    img.src = src; // property set — safe for long base64 URLs
+
+    poloid.append(removeBtn, img);
+    zone.appendChild(poloid);
+    requestAnimationFrame(() => poloid.classList.add('shown'));
+
+    removeBtn.addEventListener('click', () => {
+      poloid.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      poloid.style.opacity = '0';
+      poloid.style.transform += ' translateY(20px)';
+      setTimeout(() => setupEmptyState(zone, cardNum), 300);
+    });
+  }
+
+  render();
+</script>
+
+</body>
+</html>
