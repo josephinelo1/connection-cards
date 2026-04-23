@@ -132,10 +132,23 @@
     display: flex;
     flex-direction: column;
     opacity: 0;
-    transform: translateX(40px) scale(0.98);
+    transform: translateY(30px) scale(0.9);
     pointer-events: none;
-    transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition:
+      opacity 0.6s ease,
+      transform 0.65s cubic-bezier(0.2, 0.8, 0.25, 1);
     overflow: hidden;
+    will-change: transform, opacity;
+  }
+
+  /* Card contents fade when the card isn't the front one — gives "back of stack" feel */
+  .card > *:not(.card-bg) {
+    transition: opacity 0.35s ease;
+  }
+  .card.peek-1 > *:not(.card-bg),
+  .card.peek-2 > *:not(.card-bg),
+  .card.back > *:not(.card-bg) {
+    opacity: 0;
   }
 
   /* Paper texture on each card */
@@ -160,20 +173,43 @@
     box-shadow: inset 0 0 80px rgba(180, 140, 100, 0.18);
   }
 
+  /* Active — front card of the stack */
   .card.active {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translate(0, 0) rotate(0) scale(1);
     pointer-events: auto;
+    z-index: 10;
   }
 
+  /* Peek layers — small offsets, so you see edges peeking out behind the top */
+  .card.peek-1 {
+    opacity: 1;
+    transform: translate(0, 10px) rotate(-1.2deg) scale(0.975);
+    z-index: 9;
+  }
+  .card.peek-2 {
+    opacity: 1;
+    transform: translate(0, 18px) rotate(1.3deg) scale(0.955);
+    z-index: 8;
+  }
+
+  /* Forward: top card flies up-and-over to the back of the deck */
   .card.leaving-left {
     opacity: 0;
-    transform: translateX(-40px) scale(0.98);
+    transform: translate(70px, -30px) rotate(10deg) scale(0.88);
+    transition:
+      opacity 0.55s ease 0.25s,
+      transform 0.75s cubic-bezier(0.35, 0, 0.2, 1);
+    z-index: 11;
+    pointer-events: none;
   }
 
-  .card.leaving-right {
-    opacity: 0;
-    transform: translateX(40px) scale(0.98);
+  /* Backward: an incoming card arrives from the back-of-deck position.
+     We snap the card to this state instantly, then let .active animate it in. */
+  .card.coming-from-back {
+    opacity: 0 !important;
+    transform: translate(70px, -30px) rotate(10deg) scale(0.88) !important;
+    transition: none !important;
   }
 
   @media (hover: hover) {
@@ -342,6 +378,55 @@
     display: none;
   }
 
+  .format-hint {
+    display: block;
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+  .format-hint .ok { opacity: 0.55; }
+  .format-hint .sep { opacity: 0.35; margin: 0 4px; }
+  .format-hint .no {
+    color: var(--dusty-rose);
+    opacity: 0.85;
+  }
+
+  /* Restart button — only on final card */
+  .restart-btn {
+    margin-top: 28px;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: rgba(255, 250, 238, 0.65);
+    border: 1px solid rgba(74, 63, 54, 0.22);
+    border-radius: 999px;
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.3s ease;
+  }
+  .restart-btn:hover {
+    background: rgba(255, 250, 238, 0.95);
+    border-color: var(--dusty-rose);
+    transform: translateY(-1px);
+  }
+  .restart-btn .restart-arrow {
+    font-size: 14px;
+    transition: transform 0.5s ease;
+    display: inline-block;
+  }
+  .restart-btn:hover .restart-arrow {
+    transform: rotate(-180deg);
+  }
+
   /* "peek at mine" — pill button that looks like an actual button */
   .peek-btn {
     display: inline-flex;
@@ -405,7 +490,7 @@
   /* Polaroid */
   .polaroid {
     background: #fdfbf4;
-    padding: 16px 16px 52px;
+    padding: 14px 14px 44px;
     box-shadow:
       0 2px 4px rgba(74, 63, 54, 0.15),
       0 18px 36px -10px rgba(74, 63, 54, 0.32);
@@ -413,7 +498,7 @@
     transform: rotate(-3.5deg) translateY(30px) scale(0.9);
     opacity: 0;
     transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.3), opacity 0.5s ease;
-    width: min(340px, 78vw);
+    width: min(270px, 70vw);
     position: relative;
     cursor: grab;
   }
@@ -549,7 +634,7 @@
   @media (max-width: 520px) {
     .card { padding: 44px 26px 24px; }
     .corner { font-size: 18px; top: 16px; left: 18px; }
-    .polaroid { width: min(260px, 72vw); padding: 14px 14px 44px; }
+    .polaroid { width: min(220px, 66vw); padding: 12px 12px 36px; }
   }
 
   /* Hint for swipe */
@@ -686,6 +771,10 @@
       <p class="card-question">What year of your life would you want to relive?</p>
       <p class="card-subtext">and would you change anything — or just feel it again?</p>
       <div class="photo-zone"></div>
+      <button class="restart-btn" type="button">
+        <span class="restart-label">flip through again</span>
+        <span class="restart-arrow">↻</span>
+      </button>
     </article>
 
   </div>
@@ -706,17 +795,32 @@
   const progress = document.getElementById('progress');
 
   let current = 0;
+  let previous = null;
 
   function render(direction) {
+    // For backward navigation, first snap the incoming active card to the
+    // "back of deck" position (invisible) without any transition, so when
+    // .active is applied it animates FROM behind TO the front.
+    if (direction === 'prev' && previous !== null && previous !== current) {
+      const incoming = cards[current];
+      incoming.classList.remove('active', 'peek-1', 'peek-2', 'leaving-left');
+      incoming.classList.add('coming-from-back');
+      // Force the browser to commit this state before we add .active
+      void incoming.offsetWidth;
+    }
+
     cards.forEach((card, i) => {
-      card.classList.remove('active', 'leaving-left', 'leaving-right');
+      card.classList.remove('active', 'peek-1', 'peek-2', 'leaving-left', 'coming-from-back');
       if (i === current) {
         card.classList.add('active');
-      } else if (direction === 'next' && i === current - 1) {
+      } else if (direction === 'next' && i === previous) {
         card.classList.add('leaving-left');
-      } else if (direction === 'prev' && i === current + 1) {
-        card.classList.add('leaving-right');
+      } else if (i === current + 1) {
+        card.classList.add('peek-1');
+      } else if (i === current + 2) {
+        card.classList.add('peek-2');
       }
+      // else: default — hidden at the back of the deck
     });
     if (current === 0) {
       progress.textContent = '';
@@ -733,7 +837,15 @@
     const next = Math.min(Math.max(current + delta, 0), cards.length - 1);
     if (next === current) return;
     const direction = delta > 0 ? 'next' : 'prev';
+    previous = current;
     current = next;
+    render(direction);
+  }
+
+  function jumpTo(target, direction = 'next') {
+    if (target === current) return;
+    previous = current;
+    current = target;
     render(direction);
   }
 
@@ -773,6 +885,12 @@
     beginBtn.addEventListener('click', () => go(1));
   }
 
+  // Final card — "flip through again" shuffles back to card 1
+  const restartBtn = document.querySelector('.restart-btn');
+  if (restartBtn) {
+    restartBtn.addEventListener('click', () => jumpTo(1, 'next'));
+  }
+
   // Cards that have creator examples. Add more numbers here as you add photos.
   const PEEK_CARDS = new Set([1, 2]);
 
@@ -793,17 +911,17 @@
       <label class="photo-drop">
         <svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>
         <span>add a photo</span>
-        <input type="file" accept="image/*" />
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
       </label>
+      <span class="format-hint"><span class="ok">jpg, png, webp</span> <span class="sep">—</span> <span class="no">no heic</span></span>
     `;
 
     // File upload → render polaroid
     zone.querySelector('input[type=file]').addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => renderPolaroid(zone, reader.result, cardNum);
-      reader.readAsDataURL(file);
+      const url = URL.createObjectURL(file);
+      renderPolaroid(zone, url, cardNum);
     });
 
     // Peek toggle (only on cards with examples)
@@ -851,6 +969,14 @@
 
     const img = document.createElement('img');
     img.alt = '';
+    img.onerror = () => {
+      // Unsupported format (HEIC, etc.) — reset and show hint.
+      setupEmptyState(zone, cardNum);
+      const hint = zone.querySelector('.format-hint');
+      if (hint) {
+        hint.innerHTML = `<span class="no">that format didn't work — try jpg or png</span>`;
+      }
+    };
     img.src = src; // property set — safe for long base64 URLs
 
     poloid.append(removeBtn, img);
