@@ -150,6 +150,11 @@
   .card.back > *:not(.card-bg) {
     opacity: 0;
   }
+  /* Explicitly hide peek-btn on non-active cards (dynamically appended, needs direct rule) */
+  .card:not(.active) .peek-btn {
+    opacity: 0;
+    pointer-events: none;
+  }
 
   /* Paper texture on each card */
   .card::before {
