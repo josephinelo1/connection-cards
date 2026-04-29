@@ -332,6 +332,7 @@
   }
 
   /* Photo area — centered in the remaining space below text */
+  /* position:relative removed so peek-btn absolute coords are relative to the card */
   .photo-zone {
     margin-top: 28px;
     margin-bottom: auto;
@@ -342,7 +343,6 @@
     align-items: center;
     justify-content: center;
     gap: 14px;
-    position: relative;
     z-index: 3;
   }
 
@@ -429,9 +429,11 @@
     transform: rotate(-180deg);
   }
 
-  /* "peek at mine" — right-aligned at top of photo-zone, inside card flow so it fades with card */
+  /* "peek at mine" — top-right corner of card. Lives inside photo-zone so it fades with the card */
   .peek-btn {
-    align-self: flex-end;
+    position: absolute;
+    top: 16px;
+    right: 16px;
     display: inline-flex;
     align-items: center;
     font-family: 'JetBrains Mono', ui-monospace, monospace;
