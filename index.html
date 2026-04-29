@@ -113,7 +113,7 @@
   .deck {
     position: relative;
     width: 100%;
-    height: min(680px, 72dvh);
+    height: min(740px, 80dvh);
     flex-shrink: 0;
   }
 
@@ -428,35 +428,29 @@
     transform: rotate(-180deg);
   }
 
-  /* Row wrapper: add-a-photo + peek button sit side by side */
-  .photo-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  /* "peek at mine" — secondary pill to the right of add-a-photo */
+  /* "peek at mine" — pinned to top-right corner of the card */
   .peek-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 5;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
     font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-size: 10px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
     color: var(--ink-soft);
-    background: transparent;
+    background: rgba(255, 250, 238, 0.6);
     border: 1px solid rgba(74, 63, 54, 0.18);
     border-radius: 999px;
-    padding: 9px 16px;
+    padding: 7px 14px;
     cursor: pointer;
-    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    transition: all 0.25s ease;
     white-space: nowrap;
   }
   .peek-btn:hover {
-    background: rgba(255, 250, 238, 0.8);
+    background: rgba(255, 250, 238, 0.95);
     border-color: rgba(74, 63, 54, 0.4);
     color: var(--ink);
     transform: translateY(-1px);
@@ -510,7 +504,7 @@
     transform: rotate(-3.5deg) translateY(30px) scale(0.9);
     opacity: 0;
     transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.3), opacity 0.5s ease;
-    width: min(270px, 70vw);
+    width: min(200px, 55vw);
     position: relative;
     cursor: grab;
   }
@@ -916,17 +910,14 @@
 
   function setupEmptyState(zone, cardNum) {
     const hasPeek = PEEK_CARDS.has(cardNum);
-    // Order: peek-gallery (top) → row with add-a-photo + peek button side-by-side (bottom)
+    // Photo zone: gallery (fills when open) above add-a-photo
     zone.innerHTML = `
       <div class="peek-gallery"></div>
-      <div class="photo-row">
-        <label class="photo-drop">
-          <svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>
-          <span>add a photo</span>
-          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
-        </label>
-        ${hasPeek ? `<button class="peek-btn" type="button">peek at mine ↗</button>` : ''}
-      </div>
+      <label class="photo-drop">
+        <svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>add a photo</span>
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
+      </label>
       <span class="format-hint"><span class="ok">jpg, png, webp</span> <span class="sep">—</span> <span class="no">no heic</span></span>
     `;
 
@@ -938,9 +929,15 @@
       renderPolaroid(zone, url, cardNum);
     });
 
-    // Peek toggle (only on cards with examples)
+    // Peek button: pinned to card top-right corner (only on cards with examples)
     if (!hasPeek) return;
-    const peekBtn = zone.querySelector('.peek-btn');
+    const card = zone.closest('.card');
+    const peekBtn = document.createElement('button');
+    peekBtn.className = 'peek-btn';
+    peekBtn.type = 'button';
+    peekBtn.textContent = 'peek at mine ↗';
+    card.appendChild(peekBtn);
+
     const gallery = zone.querySelector('.peek-gallery');
     peekBtn.addEventListener('click', () => {
       if (gallery.classList.contains('open')) {
