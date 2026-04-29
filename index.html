@@ -150,11 +150,7 @@
   .card.back > *:not(.card-bg) {
     opacity: 0;
   }
-  /* Explicitly hide peek-btn on non-active cards (dynamically appended, needs direct rule) */
-  .card:not(.active) .peek-btn {
-    opacity: 0;
-    pointer-events: none;
-  }
+
 
   /* Paper texture on each card */
   .card::before {
@@ -433,12 +429,9 @@
     transform: rotate(-180deg);
   }
 
-  /* "peek at mine" — pinned to top-right corner of the card */
+  /* "peek at mine" — right-aligned at top of photo-zone, inside card flow so it fades with card */
   .peek-btn {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 5;
+    align-self: flex-end;
     display: inline-flex;
     align-items: center;
     font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -451,14 +444,13 @@
     border-radius: 999px;
     padding: 7px 14px;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
     white-space: nowrap;
   }
   .peek-btn:hover {
     background: rgba(255, 250, 238, 0.95);
     border-color: rgba(74, 63, 54, 0.4);
     color: var(--ink);
-    transform: translateY(-1px);
   }
 
   .peek-gallery {
@@ -915,8 +907,9 @@
 
   function setupEmptyState(zone, cardNum) {
     const hasPeek = PEEK_CARDS.has(cardNum);
-    // Photo zone: gallery (fills when open) above add-a-photo
+    // peek-btn lives inside photo-zone so it inherits the card's fade-out on non-active cards
     zone.innerHTML = `
+      ${hasPeek ? `<button class="peek-btn" type="button">peek at mine ↗</button>` : ''}
       <div class="peek-gallery"></div>
       <label class="photo-drop">
         <svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -934,15 +927,8 @@
       renderPolaroid(zone, url, cardNum);
     });
 
-    // Peek button: pinned to card top-right corner (only on cards with examples)
     if (!hasPeek) return;
-    const card = zone.closest('.card');
-    const peekBtn = document.createElement('button');
-    peekBtn.className = 'peek-btn';
-    peekBtn.type = 'button';
-    peekBtn.textContent = 'peek at mine ↗';
-    card.appendChild(peekBtn);
-
+    const peekBtn = zone.querySelector('.peek-btn');
     const gallery = zone.querySelector('.peek-gallery');
     peekBtn.addEventListener('click', () => {
       if (gallery.classList.contains('open')) {
@@ -951,8 +937,6 @@
         peekBtn.textContent = 'peek at mine ↗';
       } else {
         gallery.innerHTML = '';
-        // Placeholder polaroids preserve order but stay hidden until their
-        // image loads — so empty white boxes never flash.
         ['a', 'b', 'c'].forEach((letter) => {
           const polaroid = document.createElement('div');
           polaroid.className = 'peek-polaroid';
