@@ -654,6 +654,8 @@
     .format-hint { font-size: 9px; margin-top: 4px; }
     /* Smaller polaroid so it doesn't cover the subtext */
     .polaroid { width: min(155px, 48vw); padding: 9px 9px 26px; }
+    /* Smaller peek gallery polaroids on mobile */
+    .peek-polaroid { width: 110px; padding: 8px 8px 20px; }
   }
 
   /* Hint for swipe */
@@ -805,7 +807,7 @@
 </div>
 
 <div class="progress" id="progress"></div>
-<div class="swipe-hint">swipe to continue →</div>
+<div class="swipe-hint">swipe right to begin →</div>
 
 <script>
   const cards = Array.from(document.querySelectorAll('.card'));
