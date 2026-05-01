@@ -627,11 +627,14 @@
   .begin-mobile { display: none; }
   @media (max-width: 520px) {
     .begin-mobile { display: inline; }
-    /* Taller cards on mobile — uses space freed by removing the progress bar */
-    .deck { height: min(740px, 88dvh); }
+    /* Hide corner label + fill full viewport — no outer beige visible */
+    .corner { display: none; }
+    .stage { padding: 0; }
+    .deck-wrap { width: 100%; height: 100%; gap: 0; }
+    .deck { height: 100%; }
+    .card { border-radius: 0; }
     /* Shift 01/10 + question higher by reducing top padding */
     .card { padding: 32px 24px 20px; }
-    .corner { font-size: 18px; top: 16px; left: 18px; }
     /* Tighten spacing between text and photo zone */
     .card:not(.card-intro) .card-question { margin-bottom: 14px; }
     .card-subtext { font-size: 17px; }
