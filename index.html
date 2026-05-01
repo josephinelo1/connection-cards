@@ -624,7 +624,9 @@
   .card[data-accent="sage"] { background: radial-gradient(ellipse at 30% 0%, #f6faef 0%, transparent 60%), linear-gradient(160deg, #f5f3e6 0%, #e8eadb 100%); }
   .card[data-accent="tan"]  { background: radial-gradient(ellipse at 30% 0%, #fff7e6 0%, transparent 60%), linear-gradient(160deg, #fdf1db 0%, #f0dcb9 100%); }
 
+  .begin-mobile { display: none; }
   @media (max-width: 520px) {
+    .begin-mobile { display: inline; }
     /* Taller cards on mobile — uses space freed by removing the progress bar */
     .deck { height: min(740px, 88dvh); }
     /* Shift 01/10 + question higher by reducing top padding */
@@ -691,7 +693,7 @@
       <p class="card-question">My ten favorite connection card questions, inspired by decks like <em>Tales</em> and <em>We're Not Really Strangers</em>.</p>
       <p class="card-question">I added photos because a story always lands deeper when you can see it.</p>
       <p class="signoff">— with love, Josephine</p>
-      <button class="begin" type="button">begin · swipe right <span class="arrow">→</span></button>
+      <button class="begin" type="button">begin<span class="begin-mobile"> · swipe right</span> <span class="arrow">→</span></button>
     </article>
 
     <!-- ========== CARD 1 — The First Thing ========== -->
