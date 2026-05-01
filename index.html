@@ -588,19 +588,9 @@
     .nav { display: none; }
   }
 
-  /* Progress */
+  /* Progress — hidden (redundant with the in-card index) */
   .progress {
-    position: fixed;
-    bottom: 32px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 11px;
-    color: var(--ink-soft);
-    z-index: 10;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    opacity: 0.75;
+    display: none;
   }
 
   /* Intro corner mark */
@@ -637,6 +627,9 @@
   .card[data-accent="tan"]  { background: radial-gradient(ellipse at 30% 0%, #fff7e6 0%, transparent 60%), linear-gradient(160deg, #fdf1db 0%, #f0dcb9 100%); }
 
   @media (max-width: 520px) {
+    /* Taller cards — progress bar is gone so use the freed space */
+    .deck { height: min(100%, 88dvh); }
+    .stage { padding: 16px 16px 12px; }
     /* Shift 01/10 + question higher by reducing top padding */
     .card { padding: 32px 24px 20px; }
     .corner { font-size: 18px; top: 16px; left: 18px; }
